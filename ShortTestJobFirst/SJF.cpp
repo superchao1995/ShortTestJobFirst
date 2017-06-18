@@ -158,7 +158,10 @@ void processLinkList::SJFPrint()
             //临时链表删除此节点
             if (MinRunTimeNode == TemporaryHead)
             {
-                cout << "└────┴────┴────┴────┘" << endl;
+                if(TemporaryHead->GetTemporaryNext()!=nullptr)
+                    cout << "├────┼────┼────┼────┤" << endl;
+                else
+                    cout << "└────┴────┴────┴────┘" << endl;
                 TemporaryHead = TemporaryHead->GetTemporaryNext();
             }
             else
