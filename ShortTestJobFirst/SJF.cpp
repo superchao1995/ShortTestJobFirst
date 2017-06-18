@@ -38,7 +38,7 @@ public:
     }
     inline void Show()
     {
-        cout << "name:" << name << "\t" << "arrival time:" << arrivalTime << "\t" << "run time:" << runTime << endl;
+        cout << "│" << name << "       │" << arrivalTime << "       │" << runTime <<"       │" << endl;
     };
 
 private:
@@ -87,16 +87,24 @@ void processLinkList::InitNode()
         last = last->GetNext();
     }
     num++;
-    //cout << num << endl;
+
+    cout << "初始数据：" << endl;
     cout << "节点数：" << num << endl;
+    
+    cout << "┌────┬────┬────┐" << endl;
+    cout << "│进程名  │到达时间│运行时间│" << endl;
     Show(head);
 }
 
 void processLinkList::Show(process* node)
 {
+    cout << "├────┼────┼────┤" << endl;
     node->Show();
     if (node->GetNext() == 0)
+    {
+        cout << "└────┴────┴────┘" << endl;
         cout << endl << "输出完成" << endl;
+    }
     else
         Show(node->GetNext());
 }
@@ -119,10 +127,10 @@ void processLinkList::SJFPrint()
 
     TemporaryHead = head;
     PMNode = MinRunTimeNode = PriorNode = ThisNode= nullptr;
-
+    cout << "SJF短进程优先：" << endl;
     cout << "┌────┬────┬────┬────┐" << endl;
     cout << "│进程名  │到达时间│运行时间│结束时间│" << endl;
-    cout << "├────┼────┼────┼────┤" << endl;
+    //cout << "├────┼────┼────┼────┤" << endl;
 
     //排序输出进程表 ，当临时链表为空时，输出完成
     while (TemporaryHead != nullptr)
@@ -143,7 +151,6 @@ void processLinkList::SJFPrint()
             }
             PriorNode = ThisNode;
             ThisNode = ThisNode->GetTemporaryNext();
-               // NowTime++;
         } while (ThisNode!= nullptr);
 
         //当前时刻内是否有进程到达（是否查找到）
@@ -152,28 +159,19 @@ void processLinkList::SJFPrint()
         else
         {
             NowTime = NowTime + MinRunTimeNode->GetRunTime();
+            cout << "├────┼────┼────┼────┤" << endl;
             cout << "│" << MinRunTimeNode->GetName() << "       │" << MinRunTimeNode->GetArrivalTime() << "       │" << MinRunTimeNode->GetRunTime() << "       │" << NowTime << "       │" << endl;
-            //cout << "|─────|─────|─────|─────|" << endl;
-
+        
             //临时链表删除此节点
             if (MinRunTimeNode == TemporaryHead)
-            {
-                if(TemporaryHead->GetTemporaryNext()!=nullptr)
-                    cout << "├────┼────┼────┼────┤" << endl;
-                else
-                    cout << "└────┴────┴────┴────┘" << endl;
                 TemporaryHead = TemporaryHead->GetTemporaryNext();
-            }
             else
-            {
-                cout << "├────┼────┼────┼────┤" << endl;
                 PMNode->SetTemporaryNext(MinRunTimeNode->GetTemporaryNext());
-            }
         }
 
         
     }
-    //cout << "──────────────────────-" << endl;
+    cout << "└────┴────┴────┴────┘" << endl;
     
 }
 
