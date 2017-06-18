@@ -6,7 +6,7 @@ using namespace std;
 class process
 {
 public:
-    process(string n = "process", int a = 0, int r = 0, int e = 0, process* ne = 0, process* ne1 = 0) :name(n), arrivalTime(a), runTime(r), next(ne), next1(ne1) {  }
+    process(string n = "process", int a = 0, int r = 0, int e = 0, process* ne = 0, process* ne1 = 0) :name(n), arrivalTime(a), runTime(r), next(ne), TemporaryNext(ne1) {  }
 
     inline string GetName()
     {
@@ -28,13 +28,13 @@ public:
     {
         next = n;
     }
-    inline process* GetNext1()
+    inline process* GetTemporaryNext()
     {
-        return next1;
+        return TemporaryNext;
     };
-    inline void SetNext1(process* n)
+    inline void SetTemporaryNext(process* n)
     {
-        next1 = n;
+        TemporaryNext = n;
     }
     inline void Show()
     {
@@ -46,10 +46,7 @@ private:
     int arrivalTime;
     int runTime;
     process* next;
-    process* next1;
-
-
-
+    process* TemporaryNext;//用于构建临时链表的临时指针；
 };
 
 
@@ -59,9 +56,11 @@ public:
     processLinkList(process* h = 0, process* l = 0, int n = 0) :head(h), last(l), num(n) {}
 
     void InitNode();
-    void Stro(process* next);
+    void SJFPrint();//按照短进程优先算法输出进程运行表
     void Show(process* next);
     process* GetHead();
+    //便于其他算法排序，添加重做临时链表的函数
+
 
 private:
     process* head;
@@ -84,11 +83,12 @@ void processLinkList::InitNode()
     else
     {
         last->SetNext(new process(name, aT, rT));
-        last->SetNext1(last->GetNext());
+        last->SetTemporaryNext(last->GetNext());
         last = last->GetNext();
     }
     num++;
-    cout << num << endl;
+    //cout << num << endl;
+    cout << "节点数：" << num << endl;
     Show(head);
 }
 
@@ -100,59 +100,80 @@ void processLinkList::Show(process* node)
     else
         Show(node->GetNext());
 }
-void processLinkList::Stro(process* LinkList)
-{
-    process* ThisNode;
-    process* LastNode;//L用于保存上一个节点
-    process* MinRunTimeNode;//最短进程节点 
-    int NowTime = 0;
-    MinRunTimeNode = LastNode = ThisNode = LinkList;
-
-
-    cout << "---------------------------------------------------" << endl;
-    cout << "进程名\t到达时间\t运行时间\t结束时间" << endl;
-    cout << "---------------------------------------------------" << endl;
-
-    while (LinkList->GetNext1() != 0)
-    {
-        MinRunTimeNode = 0;
-        while (ThisNode->GetNext1() != 0)
-        {
-            if (ThisNode->GetArrivalTime() <= NowTime)
-            {
-                if (ThisNode->GetRunTime() < MinRunTimeNode->GetRunTime())
-                {
-                    MinRunTimeNode = ThisNode;
-                    ThisNode = ThisNode->GetNext1();
-
-                }
-            }
-        }
-        if (ThisNode == LastNode)
-            NowTime++;
-        else
-        {
-            ThisNode->Show();
-            NowTime = NowTime + ThisNode->GetRunTime();
-            LastNode->SetNext1(ThisNode->GetNext1());
-        }
-    }
-    cout << "-----------------------------------";
-    /*else
-    {
-    if (NODE->GetRunTime()<minRT)
-    {
-    minAT = NODE;
-    minRT = NODE->GetRunTime();
-    }
-    }
-    }//	cout <<NODE->GetName() <<"\t" <<NODE->GetArrivalTime <<"\t" <<NODE->GetRunTime() <<"\t" <<NowTime <<endl;*/
-}
 
 process* processLinkList::GetHead()
 {
     return head;
 }
+
+//为了保存原始数据，同时简化排序输出过程，创建临时链表，输出一个节点后临时链表中删除此节点，
+void processLinkList::SJFPrint()
+{
+    process* ThisNode;//查找过程当前节点
+    process* PriorNode;//查找过程前一个节点
+    process* MinRunTimeNode;//最短进程节点 
+    process* PMNode;//最短进程节点前一个节点
+    process* TemporaryHead;//临时链表头结点
+
+    int NowTime = 0;
+
+    TemporaryHead = head;
+    PMNode = MinRunTimeNode = PriorNode = ThisNode= nullptr;
+
+    cout << "┌────┬────┬────┬────┐" << endl;
+    cout << "│进程名  │到达时间│运行时间│结束时间│" << endl;
+    cout << "├────┼────┼────┼────┤" << endl;
+
+    //排序输出进程表 ，当临时链表为空时，输出完成
+    while (TemporaryHead != nullptr)
+    {
+        MinRunTimeNode = nullptr;
+        ThisNode = TemporaryHead;
+
+        //遍历临时链表，找到当前时刻内最短进程
+        do
+        {
+            if (ThisNode->GetArrivalTime() <= NowTime)
+            {
+                if (MinRunTimeNode == nullptr||ThisNode->GetRunTime() < MinRunTimeNode->GetRunTime())
+                {
+                    MinRunTimeNode = ThisNode;
+                    PMNode = PriorNode;
+                }
+            }
+            PriorNode = ThisNode;
+            ThisNode = ThisNode->GetTemporaryNext();
+               // NowTime++;
+        } while (ThisNode!= nullptr);
+
+        //当前时刻内是否有进程到达（是否查找到）
+        if (MinRunTimeNode == nullptr)
+            NowTime++;
+        else
+        {
+            NowTime = NowTime + MinRunTimeNode->GetRunTime();
+            cout << "│" << MinRunTimeNode->GetName() << "       │" << MinRunTimeNode->GetArrivalTime() << "       │" << MinRunTimeNode->GetRunTime() << "       │" << NowTime << "       │" << endl;
+            //cout << "|─────|─────|─────|─────|" << endl;
+
+            //临时链表删除此节点
+            if (MinRunTimeNode == TemporaryHead)
+            {
+                cout << "└────┴────┴────┴────┘" << endl;
+                TemporaryHead = TemporaryHead->GetTemporaryNext();
+            }
+            else
+            {
+                cout << "├────┼────┼────┼────┤" << endl;
+                PMNode->SetTemporaryNext(MinRunTimeNode->GetTemporaryNext());
+            }
+        }
+
+        
+    }
+    //cout << "──────────────────────-" << endl;
+    
+}
+
 
 int main()
 {
@@ -164,8 +185,7 @@ int main()
         cin >> i;
     }
     PL1.Show(PL1.GetHead());
-    PL1.Stro(PL1.GetHead());
-
+    PL1.SJFPrint();
     return 0;
 
 }
